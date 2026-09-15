@@ -1,0 +1,650 @@
+{
+  "name": "Github Free 2",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.photo }}",
+                    "rightValue": "image",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "e05f3a3c-a966-44f4-8243-556f03f7bc28"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Vision"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "27eeaea8-f779-4c36-b5ba-9bf3b56ed2d8",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "text",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2978a148-1854-49a7-a61c-1e23f78601de",
+                    "leftValue": "={{ $json.message.voice }}",
+                    "rightValue": "audio|voice",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Voice"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -400,
+        256
+      ],
+      "id": "25e7c396-4d04-4710-9e20-89e36fd1e43d",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3e6643d6-834e-4a9c-8c23-54589eb4acd0",
+              "name": "text",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        256
+      ],
+      "id": "cc118246-610c-4273-8eb2-3fdd94637768",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3e6643d6-834e-4a9c-8c23-54589eb4acd0",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        352
+      ],
+      "id": "8a658262-56e9-4755-92e5-a16aaece319b",
+      "name": "Set Audio"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "your url",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "your model name"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        416,
+        464
+      ],
+      "id": "175b37e8-6eb7-42b0-9bdf-05aba8370594",
+      "name": "Transcribe Audio",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "xk8cOcQK0XpIy05L",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "You are a specialized Multimodal Pre-processor for an automated WhatsApp Customer Service System. Your sole responsibility is to extract objective factual data from user-submitted images and format it for an upstream Orchestrator AI.\n\n### INSTRUCTIONS:\n1. Identify and list all visible food/beverage items, including estimated portion sizes, variations, and quantities.\n2. Perform OCR (Optical Character Recognition) on any readable text (e.g., logos, receipts, menus, packaging, handwriting).\n3. Identify visual context (e.g., dish condition, packaging integrity, table setting, restaurant vs. home environment).\n4. Strictly maintain an objective, third-person perspective. DO NOT write conversational greetings, intro text, or conclusions.\n\n### OUTPUT FORMAT:\n[VISUAL DATA EXTRACT]\n- Primary Category: <Food / Beverage / Receipt / Menu / Unrelated Image>\n- Identified Items: <Item name, quantity/portion, notable visual characteristics>\n- Extracted Text (OCR): <Exact text found or \"None\">\n- Visual Context: <Relevant customer service details like damaged box, half-eaten dish, etc.>\n[END EXTRACT]\n\n### FALLBACK INSTRUCTIONS:\n- If the image is extremely blurry, corrupted, or completely unrelated to a restaurant context:\n  Output ONLY: \"[VISUAL DATA EXTRACT] Image unusable/unrelated: <Brief 1-sentence reason> [END EXTRACT]\"",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        288,
+        0
+      ],
+      "id": "f68b5024-261e-4029-b152-df8a7e9c994e",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "071Fd2RhAVWMhO0t",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3e6643d6-834e-4a9c-8c23-54589eb4acd0",
+              "name": "text",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        576,
+        0
+      ],
+      "id": "d1729333-e2b5-41f3-8eee-f8e970e60f96",
+      "name": "VISION FIELDS"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.messages?.[0]?.image?.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer api key"
+            },
+            {
+              "name": "User-Agent",
+              "value": "curl/7.64.1"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": "={{ false }}",
+              "responseFormat": "file",
+              "outputPropertyName": "=data"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "478934c7-bb99-49a7-ab8c-b475fd913111",
+      "name": "VISIONS"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -640,
+        272
+      ],
+      "id": "d7191f1c-ddd3-40b7-8199-9c951a50b94c",
+      "name": "Telegram Trigger",
+      "webhookId": "a65f9e62-34fa-4692-88fe-2f3620e5e473",
+      "credentials": {
+        "telegramApi": {
+          "id": "6LischFds7ApQVTY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        464
+      ],
+      "id": "997378c8-b5df-4098-8302-3e67d7f0e4cd",
+      "name": "Get a file",
+      "webhookId": "b7311b00-00cb-439d-8fa0-9c7e694272f1",
+      "credentials": {
+        "telegramApi": {
+          "id": "6LischFds7ApQVTY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "$input.item.binary.data.fileName = 'audio.ogg';\n$input.item.binary.data.fileExtension = 'ogg';\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        464
+      ],
+      "id": "e89f8d09-7e8f-4a9a-930f-02741e50b64e",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1008,
+        224
+      ],
+      "id": "5ddfb1b2-92cc-44ab-bd15-a6f5e187b069",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        560
+      ],
+      "id": "2647dfd7-d774-4ea4-9d0d-202565704862",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "071Fd2RhAVWMhO0t",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        912,
+        560
+      ],
+      "id": "35bf9b08-a280-4ba6-9adf-47b101dcc6f3",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        576
+      ],
+      "id": "6a1df6c0-906a-4b13-a0a1-44915eb05207",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        1280,
+        560
+      ],
+      "id": "d02fca53-d70e-4ae6-b5b6-6049bcc17d84",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "content": "# STEP 1: Connect Your Chat Trigger\n--------------------------------------------\n⁕ How it works: This workflow defaults to Telegram.\n-----------------------------------------------------------\n⁕ How to customize:\n-------------------------------------\n* For WhatsApp: Replace this node with a WhatsApp Trigger node.\n------------------------------------------------------------------------\n* For Web / Webhooks: Replace this node with a Webhook Trigger node to connect your custom frontend or chat widgets. \n---------------------------------------------------------------------------",
+        "height": 300,
+        "width": 480,
+        "color": "#2E4B6B"
+      },
+      "id": "01409082-d471-4939-9a82-f564ccb942fb",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1168,
+        160
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# STEP 3: Voice Transcription Setup\n----------------------------------------------\nHOW IT WORKS : \n\n⁕ Handles voice notes and auto-transcribes them into text.\n-----------------------------------------------\nHOW TO CUSTOMIZED :\n\n⁕ Open the Transcribe Audio node. Insert your Groq API key (for fast Whisper transcription) or your OpenAI credentials.\n---------------\n ",
+        "height": 316,
+        "width": 528,
+        "color": "#2E67A3"
+      },
+      "id": "3d24f543-71a6-4807-b15f-7ce3f61cb4b8",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        640
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# STEP 2: Image Processing Setup\n⁕ How it works: Processes photo uploads sent by users.\n----------------------------------------------------------------\n⁕ How to customize: \nOpen the Analyze an image node and connect your preferred Multi-modal Vision API (like Gemini Flash, OpenAI, or a local vision model).\n--------------------------------------------------------------------------",
+        "height": 236,
+        "width": 528,
+        "color": "#2F745D"
+      },
+      "id": "53a68dbe-e78e-4c32-a8b0-879c5f9c27e3",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        96,
+        -272
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# STEP 4: AI Brain & Sub-Agent Tools\n----------------------------------------------\n⁕ How it works : \n* The central brain that picks the right tool based on the user's intent.\n\n⁕ How to customize :\n\n* Connect your primary chat model node (e.g., Google Gemini or Groq).\n* Add or swap out sub-tools (Calculator, Google Search, Vector Memory) based on your target client's industry.\n\n",
+        "height": 284,
+        "width": 512,
+        "color": "#2A3A89"
+      },
+      "id": "f61d45a0-8f9a-4566-95ab-eb27952a46e6",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1360,
+        160
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "VISIONS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Audio": {
+      "main": [
+        [
+          {
+            "node": "Set Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "VISION FIELDS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VISIONS": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Audio": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VISION FIELDS": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "768df825-dcd4-45a6-a30c-759d6d3f0945",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bcaf5545f05c996412e22e13d3f3f8ac36d82b3dbdfee4b422baa6f6086a524d"
+  },
+  "nodeGroups": [],
+  "id": "905ljhhUgzmoz1sD",
+  "tags": [
+    {
+      "updatedAt": "2026-09-15T05:40:10.901Z",
+      "createdAt": "2026-09-15T05:40:10.901Z",
+      "id": "IWCIxf1wJA44lWEj",
+      "name": "Github Free"
+    }
+  ]
+}
